@@ -9,3 +9,7 @@ jobs:
       - run: echo "Se vede din departare"
       - run: echo "Ca ai bani in buzunare"
       - run: echo "Hai sa ne traiesti, Patroane!"
+  Manipulation:
+    runs-on: ubuntu-latest
+    steps:
+      - run: python --version
