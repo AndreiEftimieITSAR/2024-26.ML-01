@@ -24,6 +24,5 @@ jobs:
         with:
           python-version: '3.12.7' 
       - run: python --version
-      - run: python inizio.py
-        working-directory: eftimie
+        working-directory: eftimie/ML
       - run: python inizio.py
