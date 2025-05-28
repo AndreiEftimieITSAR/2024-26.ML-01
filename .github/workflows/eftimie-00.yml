@@ -15,3 +15,7 @@ jobs:
       - run: python --version
       - run: pip --version
       - run: ifconfig
+      - run: lsb_release -a
+      - run: ls -la
+      - run: pwd
+      - run: env 
