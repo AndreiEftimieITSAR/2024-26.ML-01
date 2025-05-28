@@ -1,0 +1,9 @@
+name: Action di Eftimie
+on:
+  push:
+jobs:
+  bunasearabarosane: 
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Bunaseara, Barosane!"
+    
