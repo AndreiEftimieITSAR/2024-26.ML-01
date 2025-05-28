@@ -5,5 +5,7 @@ jobs:
   bunasearabarosane: 
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Bunaseara, Barosane!"
-    
+      - run: echo "Buna seara, Barosane!"
+      - run: echo "Se vede din departare"
+      - run: echo "Ca ai bani in buzunare"
+      - run: echo "Hai sa ne traiesti, Patroane!"
