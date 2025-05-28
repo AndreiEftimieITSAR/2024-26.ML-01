@@ -14,4 +14,4 @@ jobs:
     steps:
       - run: python --version
       - run: pip --version
-      - run: ipconfig
+      - run: ifconfig
