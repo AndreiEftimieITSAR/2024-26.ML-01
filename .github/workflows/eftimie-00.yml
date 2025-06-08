@@ -23,11 +23,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12.7' 
-      - run: python --version
       - run: pip install -r eftimie/requirements.txt
-      - run: python inizio.py
+      - run: python model_script.py
         working-directory: eftimie
       - uses: actions/upload-artifact@v4
         with:
-          name: my-artifact
-          path: eftimie
+          name: model-outputs
+          path: eftimie/outputs

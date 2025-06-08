@@ -1,23 +1,25 @@
-
+import os
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
+import joblib
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
+from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error, r2_score
 from sklearn import set_config
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import r2_score
 
+# Crea cartella output se non esiste
+os.makedirs("outputs", exist_ok=True)
+
+# Carica dataset
 df = pd.read_csv("CarPrice_Assignment.csv")
-
-df.head()
-
-df.isnull().sum()
 
 X = df.drop(columns=['car_ID', 'CarName', 'price'])
 y = df['price']
@@ -44,13 +46,13 @@ preprocessor = ColumnTransformer([
     ("cat", categorical_pipeline, categorical_cols)
 ])
 
+# Random Forest base
 model_pipeline = Pipeline([
     ("preprocessor", preprocessor),
     ("regressor", RandomForestRegressor(random_state=42))
 ])
 
 model_pipeline.fit(X_train, y_train)
-
 y_pred = model_pipeline.predict(X_test)
 
 results["Random Forest Regressor"] = {
@@ -58,13 +60,13 @@ results["Random Forest Regressor"] = {
     "MAPE": mean_absolute_percentage_error(y_test, y_pred)
 }
 
+# Linear Regression
 model_lr = Pipeline([
     ("preprocessor", preprocessor),
     ("regressor", LinearRegression())
 ])
 
 model_lr.fit(X_train, y_train)
-
 y_pred_lr = model_lr.predict(X_test)
 
 results["Linear Regression"] = {
@@ -72,9 +74,10 @@ results["Linear Regression"] = {
     "MAPE": mean_absolute_percentage_error(y_test, y_pred_lr)
 }
 
+# Grid Search su Random Forest
 param_grid = {
-    'regressor__n_estimators': [50, 100, 200],
-    'regressor__max_depth': [None, 10, 20],
+    'regressor__n_estimators': [50, 100],
+    'regressor__max_depth': [None, 10],
     'regressor__min_samples_split': [2, 5]
 }
 
@@ -92,83 +95,63 @@ grid_search = GridSearchCV(
 )
 
 grid_search.fit(X_train, y_train)
-
 best_model = grid_search.best_estimator_
-
-y_pred = best_model.predict(X_test)
-
-mae = mean_absolute_error(y_test, y_pred)
-mape = mean_absolute_percentage_error(y_test, y_pred)
-
-print("Migliori parametri trovati con Grid Search:")
-print(grid_search.best_params_)
-print(f"\nMAE:  {mae:.2f}")
-print(f"MAPE: {mape * 100:.2f}%")
+y_pred_grid = best_model.predict(X_test)
 
 results["Random Forest (Grid Search)"] = {
-    "MAE": mae,
-    "MAPE": mape
+    "MAE": mean_absolute_error(y_test, y_pred_grid),
+    "MAPE": mean_absolute_percentage_error(y_test, y_pred_grid)
 }
 
+# Salva confronto modelli
 comparison_df = pd.DataFrame(results).T
 comparison_df["MAE"] = comparison_df["MAE"].round(2)
 comparison_df["MAPE (%)"] = (comparison_df["MAPE"] * 100).round(2)
-comparison_df = comparison_df.drop(columns="MAPE")
-print("\nConfronto modelli:\n")
-print(comparison_df)
+comparison_df.drop(columns="MAPE", inplace=True)
+comparison_df.to_csv("outputs/model_comparison.csv")
 
-r2_lr = r2_score(y_test, y_pred_lr)  # Linear Regression
-r2_rf = r2_score(y_test, model_pipeline.predict(X_test))  # Random Forest
-r2_grid = r2_score(y_test, best_model.predict(X_test))  # Random Forest con GridSearch
+# Salva i parametri migliori
+with open("outputs/best_params.txt", "w") as f:
+    f.write(str(grid_search.best_params_))
 
-print(f"R² Linear Regression:          {r2_lr:.4f}")
-print(f"R² Random Forest:              {r2_rf:.4f}")
-print(f"R² Random Forest (GridSearch): {r2_grid:.4f}")
+# Salva il miglior modello
+joblib.dump(best_model, "outputs/best_model.pkl")
 
-set_config('pandas')
-
-preprocessor_only = model_pipeline.named_steps['preprocessor']
-X_test_transformed = preprocessor_only.transform(X_test)
-
-num_columns = numerical_cols
-cat_columns = preprocessor_only.named_transformers_['cat'].named_steps['encoder'].get_feature_names_out(categorical_cols)
-all_columns = np.concatenate([num_columns, cat_columns])
-
-X_test_transformed_df = pd.DataFrame(X_test_transformed, columns=all_columns)
-print("\nFeature trasformate (prime righe):\n")
-print(X_test_transformed_df.head())
-
-params = model_pipeline.get_params()
-print("\nParametri del modello:\n")
-print(params.keys())
-
-import matplotlib.pyplot as plt
-import seaborn as sns
-
+# Visualizzazioni
 # Distribuzione del target
 sns.histplot(y, kde=True)
 plt.title("Distribuzione dei prezzi delle auto")
 plt.xlabel("Prezzo")
-plt.show()
+plt.tight_layout()
+plt.savefig("outputs/distribuzione_prezzi.png")
+plt.close()
 
-# Confronto tra valori reali e predetti
+# Predizioni vs valori reali
 plt.figure(figsize=(6,6))
-plt.scatter(y_test, y_pred, alpha=0.7)
+plt.scatter(y_test, y_pred_grid, alpha=0.7)
 plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--')
 plt.xlabel("Prezzo reale")
 plt.ylabel("Prezzo predetto")
 plt.title("Predizioni vs Valori reali")
 plt.grid(True)
-plt.show()
+plt.tight_layout()
+plt.savefig("outputs/pred_vs_real.png")
+plt.close()
 
-importances = model_pipeline.named_steps["regressor"].feature_importances_
-feature_names = all_columns
-feat_imp = pd.Series(importances, index=feature_names).sort_values(ascending=False)
+# Feature importance
+preprocessor_only = best_model.named_steps['preprocessor']
+X_test_transformed = preprocessor_only.transform(X_test)
+
+cat_columns = preprocessor_only.named_transformers_['cat'].named_steps['encoder'].get_feature_names_out(categorical_cols)
+all_columns = np.concatenate([numerical_cols, cat_columns])
+importances = best_model.named_steps["regressor"].feature_importances_
+feat_imp = pd.Series(importances, index=all_columns).sort_values(ascending=False)
 
 plt.figure(figsize=(10,6))
 sns.barplot(x=feat_imp[:15], y=feat_imp.index[:15])
 plt.title("Top 15 Feature Importance")
-plt.ylabel("Feature")  
 plt.xlabel("Importanza")
+plt.ylabel("Feature")
 plt.tight_layout()
-plt.show()
+plt.savefig("outputs/feature_importance.png")
+plt.close()
