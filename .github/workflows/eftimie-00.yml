@@ -25,7 +25,8 @@ jobs:
           python-version: '3.12.7'
 
       - name: Install dependencies
-        run: pip install -r eftimie/requirements.txt
+        run: pip install scikit-learn==1.6.1
+      - run: pip install -r eftimie/requirements.txt
 
       - name: Train model
         run: python inizio.py
