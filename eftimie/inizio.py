@@ -20,7 +20,7 @@ output_dir = "eftimie/outputs"
 os.makedirs(output_dir, exist_ok=True)
 
 # Caricamento dati
-df = pd.read_csv("eftimie/CarPrice_Assignment.csv")
+df = pd.read_csv("CarPrice_Assignment.csv")
 
 X = df.drop(columns=['car_ID', 'CarName', 'price'])
 y = df['price']
