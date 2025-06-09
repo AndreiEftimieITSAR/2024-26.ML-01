@@ -5,7 +5,8 @@ import pandas as pd
 app = Flask(__name__)
 
 # Carica modello (assumiamo salvato come best_model.pkl)
-model = joblib.load("eftimie/outputs/best_model.pkl")
+model = joblib.load("outputs/best_model.pkl")
+
 
 @app.route('/infer', methods=['POST'])
 def infer():
