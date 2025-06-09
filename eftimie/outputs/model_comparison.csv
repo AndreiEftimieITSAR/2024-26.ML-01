@@ -1,0 +1,4 @@
+,MAE,MAPE (%)
+Random Forest Regressor,1276.4,9.35
+Linear Regression,2244.6,20.4
+Random Forest (Grid Search),1276.4,9.35
