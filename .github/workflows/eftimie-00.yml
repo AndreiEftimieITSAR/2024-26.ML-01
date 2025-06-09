@@ -4,32 +4,25 @@ on:
   push:
 
 jobs:
-  bunasearabarosane: 
+  train:
+    name: Train Model
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Buna seara, Barosane!"
-      - run: echo "Se vede din departare"
-      - run: echo "Ca ai bani in buzunare"
-      - run: echo "Hai sa ne traiesti, Patroane!"
-      - run: python --version
-      - run: pip --version
-      - run: ifconfig
-      - run: lsb_release -a
-      - run: pwd
-      - run: env
+      - name: Echo Intro
+        run: |
+          echo "Buna seara, Barosane!"
+          echo "Se vede din departare"
+          echo "Ca ai bani in buzunare"
+          echo "Hai sa ne traiesti, Patroane!"
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           sparse-checkout: |
             eftimie
 
-      - run: ls -la
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.12.7' 
+          python-version: '3.12.7'
 
       - name: Install dependencies
         run: pip install -r eftimie/requirements.txt
@@ -38,8 +31,35 @@ jobs:
         run: python inizio.py
         working-directory: eftimie
 
-      - name: Upload outputs (model + risultati)
+      - name: Upload model artifact
         uses: actions/upload-artifact@v4
         with:
-          name: outputs
+          name: model-artifact
           path: eftimie/outputs
+
+  infer:
+    name: Infer & Test API
+    needs: train
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            eftimie
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.7'
+
+      - name: Install dependencies
+        run: pip install -r eftimie/requirements.txt
+
+      - name: Download model artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: model-artifact
+          path: eftimie/outputs
+
+      - name: Run tests
+        run: pytest test_app.py
+        working-directory: eftimie
