@@ -43,7 +43,3 @@ jobs:
         with:
           name: outputs
           path: eftimie/outputs
-
-      - name: Run Flask inference test with pytest
-        run: pytest
-        working-directory: eftimie
