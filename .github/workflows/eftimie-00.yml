@@ -1,6 +1,8 @@
 name: Action di Eftimie
+
 on:
   push:
+
 jobs:
   bunasearabarosane: 
     runs-on: ubuntu-latest
@@ -15,18 +17,33 @@ jobs:
       - run: lsb_release -a
       - run: pwd
       - run: env
-      - uses: actions/checkout@v4
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           sparse-checkout: |
             eftimie
+
       - run: ls -la
-      - uses: actions/setup-python@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12.7' 
-      - run: pip install -r eftimie/requirements.txt
-      - run: python inizio.py
+
+      - name: Install dependencies
+        run: pip install -r eftimie/requirements.txt
+
+      - name: Train model
+        run: python model_script.py
         working-directory: eftimie
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload outputs (model + risultati)
+        uses: actions/upload-artifact@v4
         with:
           name: outputs
           path: eftimie/outputs
+
+      - name: Run Flask inference test with pytest
+        run: pytest
+        working-directory: eftimie
