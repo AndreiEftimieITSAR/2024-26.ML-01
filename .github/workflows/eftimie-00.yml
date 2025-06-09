@@ -35,7 +35,7 @@ jobs:
         run: pip install -r eftimie/requirements.txt
 
       - name: Train model
-        run: python model_script.py
+        run: python inizio.py
         working-directory: eftimie
 
       - name: Upload outputs (model + risultati)
